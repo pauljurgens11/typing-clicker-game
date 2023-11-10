@@ -48,37 +48,40 @@ class _TextToTypeState extends State<TextToType> {
                   if (snapshot.hasError) {
                     return Text('Error: ${snapshot.error}');
                   } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
-                    return Center(
-                      child: RichText(
-                        text: TextSpan(
-                          text: _currentPage.substring(0, _pageCharacterIndex),
-                          style: Palette.textToTypeStyle(
-                              color: Colors.grey, fontSize: 28.0),
-                          children: <TextSpan>[
-                            TextSpan(
-                              text: _currentPage.substring(
-                                  _pageCharacterIndex, _pageCharacterIndex + 1),
-                              style: Palette.textToTypeStyle(
-                                  color: Colors.black,
-                                  fontSize: 28.0,
-                                  decoration: TextDecoration.underline,
-                                  fontWeight: FontWeight.bold),
-                            ),
-                            TextSpan(
-                              text: _currentPage.substring(
-                                  _pageCharacterIndex + 1, _currentPage.length),
-                              style: Palette.textToTypeStyle(
-                                  color: Colors.black,
-                                  fontSize: 28.0,
-                                  fontWeight: FontWeight.bold),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
+                    return textToType();
                   }
                   return const CircularProgressIndicator();
                 }),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget textToType() {
+    return Center(
+      child: RichText(
+        text: TextSpan(
+          text: _currentPage.substring(0, _pageCharacterIndex),
+          style: Palette.textToTypeStyle(color: Colors.grey, fontSize: 28.0),
+          children: <TextSpan>[
+            TextSpan(
+              text: _currentPage.substring(
+                  _pageCharacterIndex, _pageCharacterIndex + 1),
+              style: Palette.textToTypeStyle(
+                  color: Colors.black,
+                  fontSize: 28.0,
+                  decoration: TextDecoration.underline,
+                  fontWeight: FontWeight.bold),
+            ),
+            TextSpan(
+              text: _currentPage.substring(
+                  _pageCharacterIndex + 1, _currentPage.length),
+              style: Palette.textToTypeStyle(
+                  color: Colors.black,
+                  fontSize: 28.0,
+                  fontWeight: FontWeight.bold),
+            ),
           ],
         ),
       ),
