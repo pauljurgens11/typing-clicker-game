@@ -1,8 +1,8 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:typing_game_frontend/palette.dart';
-import 'package:universal_html/html.dart' as html;
 
 import 'keyboard_listener.dart';
 
@@ -15,7 +15,7 @@ class TextToType extends StatefulWidget {
 
 class _TextToTypeState extends State<TextToType> {
   final Stopwatch _stopwatch = Stopwatch();
-  late Future<List<String>> _englishWords;
+  List<String>? _englishWords;
 
   String _currentPage = " ";
   String _letterToType = " ";
@@ -26,8 +26,7 @@ class _TextToTypeState extends State<TextToType> {
   @override
   void initState() {
     super.initState();
-    _getEnglishWords();
-    _generateNewPage();
+    _loadEnglishWords();
   }
 
   @override
@@ -37,21 +36,30 @@ class _TextToTypeState extends State<TextToType> {
       child: Padding(
         padding: const EdgeInsets.only(left: 32.0, right: 24.0, top: 32.0),
         child: Stack(
+          fit: StackFit.expand,
           children: [
-            Text(
-              "Latest WPM: $_lastWPM",
-              style: Palette.textToTypeStyle(),
+            Positioned(
+              top: 0,
+              left: 0,
+              child: Text(
+                "Latest WPM: $_lastWPM",
+                style: Palette.textToTypeStyle(),
+              ),
             ),
-            FutureBuilder(
-                future: _englishWords,
-                builder: (context, snapshot) {
-                  if (snapshot.hasError) {
-                    return Text('Error: ${snapshot.error}');
-                  } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
-                    return textToType();
-                  }
-                  return const CircularProgressIndicator();
-                }),
+            _englishWords == null
+                ? FutureBuilder(
+                    future: _loadEnglishWords(),
+                    builder: (context, snapshot) {
+                      if (snapshot.hasError) {
+                        return Text('Error: ${snapshot.error}');
+                      } else if (snapshot.hasData &&
+                          snapshot.data!.isNotEmpty) {
+                        _generateNewPage();
+                        return textToType();
+                      }
+                      return const CircularProgressIndicator();
+                    })
+                : textToType(),
           ],
         ),
       ),
@@ -88,24 +96,33 @@ class _TextToTypeState extends State<TextToType> {
     );
   }
 
-  void _getEnglishWords() async {
-    _englishWords = html.HttpRequest.getString('../assets/english_words.txt')
-        .then((data) => data.split('\n'));
+  Future<List<String>?> _loadEnglishWords() async {
+    final response = await http.get(Uri.file('assets/english_words.txt'));
+    if (response.statusCode == 200) {
+      final data = response.body;
+      _englishWords = data.split('\n');
+    } else {
+      print(response.reasonPhrase);
+      _englishWords = <String>[];
+    }
+    return _englishWords;
   }
 
   void _generateNewPage() async {
-    List<String> words = await _englishWords;
+    List<String>? words = _englishWords;
 
-    String newPage = "";
-    Random random = Random();
-    for (int i = 0; i < 18; i++) {
-      int randomInt = random.nextInt(words.length);
-      newPage += "${words[randomInt].toLowerCase()} ";
+    if (words != null) {
+      String newPage = "";
+      Random random = Random();
+      for (int i = 0; i < 18; i++) {
+        int randomInt = random.nextInt(words.length);
+        newPage += "${words[randomInt].toLowerCase()} ";
+      }
+      setState(() {
+        _currentPage = newPage.substring(0, newPage.length - 1);
+        _letterToType = _currentPage.substring(0, 1);
+      });
     }
-    setState(() {
-      _currentPage = newPage.substring(0, newPage.length - 1);
-      _letterToType = _currentPage.substring(0, 1);
-    });
   }
 
   void _startTimer() {
